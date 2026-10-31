@@ -1,5 +1,8 @@
 package ru.yandex.praktikumchatapp
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -108,6 +111,20 @@ class ChatViewModelTest {
     fun testReceiveMessage_concurrentMessages() = runTest(testDispatcher) {
         val messagesToSend = (1..100).map { Message.MyMessage("Message $it") }
 
-        // TODO Задание 6: допишите юнит-тест
+        val start = CompletableDeferred<Unit>()
+        val jobs = messagesToSend.map { message ->
+            launch(testDispatcher) {
+                start.await()
+                viewModel.sendMyMessage(message.text)
+            }
+        }
+        start.complete(Unit)
+        jobs.joinAll()
+        advanceUntilIdle()
+
+        val actualMessages = viewModel.chatState.value.messages
+        assertEquals(messagesToSend.size, actualMessages.size)
+        assertEquals(messagesToSend.toSet(), actualMessages.toSet())
+        assertTrue(viewModel.chatState.value.shouldShowKeyboard)
     }
 }
