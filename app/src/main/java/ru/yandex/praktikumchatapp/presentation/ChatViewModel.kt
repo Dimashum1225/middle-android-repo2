@@ -15,13 +15,8 @@ class ChatViewModel(
     private val repository: ChatRepository = ChatRepository()
 ) : ViewModel() {
 
-    private val _messages = MutableStateFlow<List<Message>>(emptyList())
-    val messages: StateFlow<List<Message>> = _messages.asStateFlow()
-
-    private val _shouldShowKeyboard = MutableStateFlow(false)
-    val shouldShowKeyboard: StateFlow<Boolean> = _shouldShowKeyboard.asStateFlow()
-
-    // TODO Задание 4: замените messages и shouldShowKeyboard на state
+    private val _chatState = MutableStateFlow(ChatState())
+    val chatState: StateFlow<ChatState> = _chatState.asStateFlow()
 
     init {
         if (isWithReplies) {
@@ -38,8 +33,12 @@ class ChatViewModel(
     }
 
     private fun receiveMessage(message: Message) {
-        _messages.update { messages -> messages + message }
-        _shouldShowKeyboard.value = true
+        _chatState.update { state ->
+            state.copy(
+                messages = state.messages + message,
+                shouldShowKeyboard = true
+            )
+        }
     }
 
     fun sendMyMessage(messageText: String) {
