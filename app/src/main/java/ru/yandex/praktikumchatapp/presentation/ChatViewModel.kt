@@ -2,6 +2,7 @@ package ru.yandex.praktikumchatapp.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +23,8 @@ class ChatViewModel(
         if (isWithReplies) {
             viewModelScope.launch {
                 repository.getReplyMessage()
-                    .catch {
+                    .catch { cause ->
+                        if (cause is CancellationException) throw cause
                         receiveMessage(Message.OtherMessage("Не удалось получить ответ. Попробуйте позже."))
                     }
                     .collect { response ->
