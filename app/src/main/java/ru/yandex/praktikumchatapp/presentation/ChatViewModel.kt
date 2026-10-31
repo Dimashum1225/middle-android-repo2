@@ -18,7 +18,8 @@ class ChatViewModel(
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
 
-    // TODO Задание 3: добавьте состояние shouldShowKeyboard
+    private val _shouldShowKeyboard = MutableStateFlow(false)
+    val shouldShowKeyboard: StateFlow<Boolean> = _shouldShowKeyboard.asStateFlow()
 
     // TODO Задание 4: замените messages и shouldShowKeyboard на state
 
@@ -27,18 +28,21 @@ class ChatViewModel(
             viewModelScope.launch {
                 repository.getReplyMessage()
                     .catch {
-                        _messages.update { messages ->
-                            messages + Message.OtherMessage("Не удалось получить ответ. Попробуйте позже.")
-                        }
+                        receiveMessage(Message.OtherMessage("Не удалось получить ответ. Попробуйте позже."))
                     }
                     .collect { response ->
-                        _messages.update { messages -> messages + Message.OtherMessage(response) }
+                        receiveMessage(Message.OtherMessage(response))
                     }
             }
         }
     }
 
+    private fun receiveMessage(message: Message) {
+        _messages.update { messages -> messages + message }
+        _shouldShowKeyboard.value = true
+    }
+
     fun sendMyMessage(messageText: String) {
-        _messages.update { messages -> messages + Message.MyMessage(messageText) }
+        receiveMessage(Message.MyMessage(messageText))
     }
 }

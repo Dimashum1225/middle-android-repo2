@@ -24,12 +24,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -68,12 +73,21 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun ChatScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: ChatViewModel = viewModel()
 ) {
-    val viewModel = remember { ChatViewModel() }
     val messagesList = viewModel.messages.collectAsState()
     val messageText = remember { mutableStateOf("") }
-    // TODO Задание 3: добавьте focusRequester
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val shouldShowKeyboard = viewModel.shouldShowKeyboard.collectAsState()
+
+    LaunchedEffect(shouldShowKeyboard.value) {
+        if (shouldShowKeyboard.value) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
+    }
 
     Column(modifier = modifier.fillMaxSize()) {
 
@@ -95,7 +109,6 @@ fun ChatScreen(
         Row(
             modifier = Modifier
                 .padding(16.dp)
-                // TODO Задание 3: добавьте focusRequester
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -103,6 +116,7 @@ fun ChatScreen(
                 value = messageText.value,
                 onValueChange = { messageText.value = it },
                 modifier = Modifier
+                    .focusRequester(focusRequester)
                     .weight(1f)
                     .padding(8.dp)
                     .background(Color.LightGray, shape = MaterialTheme.shapes.small)
